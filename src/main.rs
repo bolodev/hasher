@@ -30,29 +30,20 @@ fn main() {
     }
 
     if &input != "" {
-        println!("Input file:  {}", &input);
-        let mut hashes: Hashes = hash_file(&input, buffer_size);
-        println!("Bytes:  {}", &hashes.file_size);
-        println!("MD5:    {}", &hashes.md5.result_str());
-        println!("SHA1:   {}", &hashes.sha1.result_str());
-        println!("SHA256: {}", &hashes.sha256.result_str());
-        println!("SHA512: {}", &hashes.sha512.result_str());
-        println!("");
+        let hashes: Hashes = hash_file(&input, buffer_size);
+        print_hash_to_line(hashes);
+        // println!("Input file:  {}", &input);
+        // println!("Bytes:  {}", &hashes.file_size);
+        // println!("MD5:    {}", &hashes.md5.result_str());
+        // println!("SHA1:   {}", &hashes.sha1.result_str());
+        // println!("SHA256: {}", &hashes.sha256.result_str());
+        // println!("SHA512: {}", &hashes.sha512.result_str());
+        // println!("");
     }
     
     if &directory != "" {
         println!("Input directory:  {}", &directory);
         hash_directory(&directory, buffer_size);
-        // let hashes = hash_directory(&directory, buffer_size);
-        // for mut hash_struct in hashes {
-        //     println!("Filename: {}", hash_struct.file_name);
-        //     println!("Bytes:    {}", hash_struct.file_size);
-        //     println!("MD5:      {}", hash_struct.md5.result_str());
-        //     println!("SHA1:     {}", hash_struct.sha1.result_str());
-        //     println!("SHA256:   {}", hash_struct.sha256.result_str());
-        //     println!("SHA512:   {}", hash_struct.sha512.result_str());
-        //     println!("");
-        // }
     }
 
     let elapsed = time::now() - started;
@@ -73,32 +64,36 @@ struct Hashes {
 }
 
 //
+// Print the the hash results to stdio
+//
+fn print_hash_to_line(mut hash_results: Hashes) {
+    println!("File:   {}", hash_results.file_name);
+    println!("Bytes:  {}", hash_results.file_size);
+    println!("MD5:    {}", hash_results.md5.result_str());
+    println!("SHA1:   {}", hash_results.sha1.result_str());
+    println!("SHA256: {}", hash_results.sha256.result_str());
+    println!("SHA512: {}", hash_results.sha512.result_str());
+    println!("");
+}
+
+//
 // Recurse through a directory structure
 //
-fn hash_directory(input: &str, buffer_size: usize) /*-> Vec<Hashes>*/ {
-    // let mut hashes: Vec<Hashes> = Vec::new();
+fn hash_directory(input: &str, buffer_size: usize) {
 
     for entry in WalkDir::new(input) {
         match entry {
             Ok(entry) => {
                 let foo = entry.path();
                 if !foo.is_dir() {
-                //    hashes.push(hash_file(foo.to_str().unwrap(), buffer_size));
-                    let mut hashes = hash_file(foo.to_str().unwrap(), buffer_size);
-                    println!("File:   {}", &hashes.file_name);
-                    println!("Bytes:  {}", &hashes.file_size);
-                    println!("MD5:    {}", &hashes.md5.result_str());
-                    println!("SHA1:   {}", &hashes.sha1.result_str());
-                    println!("SHA256: {}", &hashes.sha256.result_str());
-                    println!("SHA512: {}", &hashes.sha512.result_str());
-                    println!("");
+                    let hashes = hash_file(foo.to_str().unwrap(), buffer_size);
+                    print_hash_to_line(hashes);
                 }
             },
             Err(error) => println!("[ERROR] {:?}", error),
         }
     }
 
-    // hashes
 }
 
 ///
