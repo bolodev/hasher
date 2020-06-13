@@ -1,4 +1,4 @@
-use argparse::{ArgumentParser, Store};
+use argparse::{ArgumentParser, Store, StoreTrue};
 use crypto::md5::Md5;
 use crypto::sha1::Sha1;
 use crypto::sha2::{Sha256, Sha512};
@@ -19,6 +19,7 @@ fn main() {
     let mut input = "".to_string();
     let mut directory = "".to_string();
     let mut buffer_size = 512; // Default 512bytes
+    let mut json_out = false;
     
     {  // this block copied from argparse example
         let mut ap = ArgumentParser::new();
@@ -26,28 +27,31 @@ fn main() {
         ap.refer(&mut input).add_option(&["-f", "--file"], Store, "Input file");
         ap.refer(&mut directory).add_option(&["-d", "--dir"], Store, "Input directory");
         ap.refer(&mut buffer_size).add_option(&["-b", "--buffer"], Store, "Buffer size (bytes)");
+        ap.refer(&mut json_out).add_option(&["-j", "--json"], StoreTrue, "JSON output");
         ap.parse_args_or_exit();
     }
 
     if &input != "" {
         let hashes: Hashes = hash_file(&input, buffer_size);
-        print_hash_to_line(hashes);
-        // println!("Input file:  {}", &input);
-        // println!("Bytes:  {}", &hashes.file_size);
-        // println!("MD5:    {}", &hashes.md5.result_str());
-        // println!("SHA1:   {}", &hashes.sha1.result_str());
-        // println!("SHA256: {}", &hashes.sha256.result_str());
-        // println!("SHA512: {}", &hashes.sha512.result_str());
-        // println!("");
+        if json_out {
+            print_hash_to_json(hashes);
+        }
+        else {
+            print_hash_to_line(hashes);
+        }
     }
     
     if &directory != "" {
-        println!("Input directory:  {}", &directory);
-        hash_directory(&directory, buffer_size);
+        if !json_out {
+            println!("Input directory:  {}", &directory);
+        }        
+        hash_directory(&directory, buffer_size, json_out);
     }
 
-    let elapsed = time::now() - started;
-    println!("Time elasped: {}", elapsed);
+    if !json_out {
+        let elapsed = time::now() - started;
+        println!("Time elasped: {}", elapsed);
+    }
 
 }
 
@@ -77,9 +81,23 @@ fn print_hash_to_line(mut hash_results: Hashes) {
 }
 
 //
+// Print JSON formatted hash results to stdio
+//
+fn print_hash_to_json(mut hash_results: Hashes) {
+    println!("{{\"file\": \"{}\", \"file_bytes\": {}, \"file_md5\": \"{}\", \"file_sha1\": \"{}\", \"file_sha256\": \"{}\", \"file_512\": \"{}\"}}", 
+        hash_results.file_name, 
+        hash_results.file_size,
+        hash_results.md5.result_str(),
+        hash_results.sha1.result_str(),
+        hash_results.sha256.result_str(),
+        hash_results.sha512.result_str()
+    );
+}
+
+//
 // Recurse through a directory structure
 //
-fn hash_directory(input: &str, buffer_size: usize) {
+fn hash_directory(input: &str, buffer_size: usize, to_json: bool) {
 
     for entry in WalkDir::new(input) {
         match entry {
@@ -87,7 +105,12 @@ fn hash_directory(input: &str, buffer_size: usize) {
                 let foo = entry.path();
                 if !foo.is_dir() {
                     let hashes = hash_file(foo.to_str().unwrap(), buffer_size);
-                    print_hash_to_line(hashes);
+                    if to_json {
+                        print_hash_to_json(hashes)
+                    }
+                    else {
+                        print_hash_to_line(hashes);
+                    }
                 }
             },
             Err(error) => println!("[ERROR] {:?}", error),
