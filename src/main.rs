@@ -84,8 +84,13 @@ fn print_hash_to_line(mut hash_results: Hashes) {
 // Print JSON formatted hash results to stdio
 //
 fn print_hash_to_json(mut hash_results: Hashes) {
-    println!("{{\"file\": \"{}\", \"file_bytes\": {}, \"file_md5\": \"{}\", \"file_sha1\": \"{}\", \"file_sha256\": \"{}\", \"file_512\": \"{}\"}}", 
-        hash_results.file_name, 
+    let mut file_name = hash_results.file_name;
+    if file_name.contains("\\") {
+        file_name = file_name.replace("\\", "\\\\");
+    }
+
+    println!("{{\"file_name\": \"{}\", \"file_bytes\": {}, \"file_md5\": \"{}\", \"file_sha1\": \"{}\", \"file_sha256\": \"{}\", \"file_512\": \"{}\"}}", 
+        file_name, 
         hash_results.file_size,
         hash_results.md5.result_str(),
         hash_results.sha1.result_str(),
