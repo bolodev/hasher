@@ -7,8 +7,9 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::fs::File;
-use time;
 use walkdir::WalkDir;
+// use time;
+
 
 //
 // Main - entrypoint
@@ -31,7 +32,8 @@ fn main() {
         ap.parse_args_or_exit();
     }
 
-    if &input != "" {
+    // if &input != "" {
+    if !&input.is_empty() {
         let hashes: Hashes = hash_file(&input, buffer_size);
         if json_out {
             print_hash_to_json(hashes);
@@ -41,7 +43,8 @@ fn main() {
         }
     }
     
-    if &directory != "" {
+    // if &directory != "" {
+    if !&directory.is_empty() {
         if !json_out {
             println!("Input directory:  {}", &directory);
         }        
@@ -77,7 +80,8 @@ fn print_hash_to_line(mut hash_results: Hashes) {
     println!("SHA1:   {}", hash_results.sha1.result_str());
     println!("SHA256: {}", hash_results.sha256.result_str());
     println!("SHA512: {}", hash_results.sha512.result_str());
-    println!("");
+    // println!("");
+    println!();
 }
 
 //
@@ -85,7 +89,7 @@ fn print_hash_to_line(mut hash_results: Hashes) {
 //
 fn print_hash_to_json(mut hash_results: Hashes) {
     let mut file_name = hash_results.file_name;
-    if file_name.contains("\\") {
+    if file_name.contains('\\') {
         file_name = file_name.replace("\\", "\\\\");
     }
 
@@ -107,9 +111,12 @@ fn hash_directory(input: &str, buffer_size: usize, to_json: bool) {
     for entry in WalkDir::new(input) {
         match entry {
             Ok(entry) => {
-                let foo = entry.path();
-                if !foo.is_dir() {
-                    let hashes = hash_file(foo.to_str().unwrap(), buffer_size);
+                // let foo = entry.path();
+                let entry_path = entry.path();
+                // if !foo.is_dir() {
+                if !entry_path.is_dir() {
+                    // let hashes = hash_file(foo.to_str().unwrap(), buffer_size);
+                    let hashes = hash_file(entry_path.to_str().unwrap(), buffer_size);
                     if to_json {
                         print_hash_to_json(hashes)
                     }
